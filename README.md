@@ -7,7 +7,6 @@ Teletext/CEEFAX pages to Minitel pages.
 Note
 ----
 
-- separated graphics are not handled correctly,
 - double height characters are not handled correctly.
 
 Usage
