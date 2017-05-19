@@ -79,47 +79,53 @@ function convertRow($row) {
                 break;
 
             // Hold graphics
-            case 0x1e:
-                $hold = TRUE;
-                break;
+            case 0x1e: $hold = TRUE; break;
 
             // Release graphics            
-            case 0x1f:
-                $hold = FALSE;
-                break;
+            case 0x1f: $hold = FALSE; break;
         }
 
+        // Handles attributes
         if($c < 0x20) {
             if($hold or $held != 0x20) {
-                if($c != 0x1d) {
-                    $destination .= chr($held) . $control;
-                } else {
+                if($c === 0x1d) {
+                    // Swap colors must be applied before held character
                     $destination .= $control . chr($held);
+                } else {
+                    // Held character is inserted before new attributes
+                    $destination .= chr($held) . $control;
                 }
             } else {
+                // Apply attributes before space
                 $destination .= $control . chr(0x20);
             }
             if(!$hold) $held = 0x20;
-        } else {
-            if($gfx) {
-                if($c >= 0x40 and $c <=0x5f) {
-                    // In graphics mode capital letters are still characters
-                    $destination .= chr(0x0f) . chr($c) . chr(0x0e);
-                    if($hold and $c & 0x20) $held = $c;
-                } elseif($c >= 0x60) {
-                    // Convert Teletext mosaic chars to Minitel mosaic chars
-                    $destination .= chr($c - 0x20);
-                    if($hold and $c & 0x20) $held = $c - 0x20;
-                } else {
-                    // Everything else is copied as is
-                    $destination .= chr($c);
-                    if($hold and $c & 0x20) $held = $c;
-                }
-            } else {
-                // Everything else is copied as is
-                $destination .= chr($c);
-            }
+            continue;
         }
+
+        // Every alpha characters is copied as is
+        if(!$gfx) {
+            $destination .= chr($c);
+            continue;
+        }
+
+        // In graphics mode capital letters are still characters
+        if($c >= 0x40 and $c <=0x5f) {
+            $destination .= chr(0x0f) . chr($c) . chr(0x0e);
+            if($hold and $c & 0x20) $held = $c;
+            continue;
+        }
+
+        // Convert Teletext mosaic chars to Minitel mosaic chars
+        if($c >= 0x60) {
+            $destination .= chr($c - 0x20);
+            if($hold and $c & 0x20) $held = $c - 0x20;
+            continue;
+        }
+
+        // Everything else is copied as is
+        $destination .= chr($c);
+        if($hold and $c & 0x20) $held = $c;
     }
 
     return $destination;
